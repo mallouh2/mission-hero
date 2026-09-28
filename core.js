@@ -980,13 +980,14 @@ window.__boot = 'fonts';
 
   window.__boot = 'levels';
   window.__letters = LETTERS_ALL;
-  await import('./level1.js').catch(err => {
+  const V = '?v=3';
+  await import('./level1.js' + V).catch(err => {
     window.__loadErrors = (window.__loadErrors || []).concat(['level1: ' + (err && err.stack ? err.stack.split('\n').slice(0, 3).join(' | ') : err)]);
   });
-  await import('./level2.js').catch(err => {
+  await import('./level2.js' + V).catch(err => {
     window.__loadErrors = (window.__loadErrors || []).concat(['level2: ' + (err && err.message ? err.message : err)]);
   });
-  await import('./level3.js').catch(err => {
+  await import('./level3.js' + V).catch(err => {
     window.__loadErrors = (window.__loadErrors || []).concat(['level3: ' + (err && err.message ? err.message : err)]);
   });
   window.__boot = 'menu';
