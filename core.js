@@ -121,13 +121,17 @@ export function tts(text) {
 }
 
 /* ---------- مخزن التسجيلات المحلي (IndexedDB) ---------- */
+let dbPromise = null;
 function idbOpen() {
-  return new Promise((res, rej) => {
-    const rq = indexedDB.open('mission-hero-voices', 1);
-    rq.onupgradeneeded = () => rq.result.createObjectStore('voices');
-    rq.onsuccess = () => res(rq.result);
-    rq.onerror = () => rej(rq.error);
-  });
+  if (!dbPromise) {
+    dbPromise = new Promise((res, rej) => {
+      const rq = indexedDB.open('mission-hero-voices', 1);
+      rq.onupgradeneeded = () => rq.result.createObjectStore('voices');
+      rq.onsuccess = () => res(rq.result);
+      rq.onerror = () => { dbPromise = null; rej(rq.error); };
+    });
+  }
+  return dbPromise;
 }
 export async function idbGet(key) {
   const db = await idbOpen();
@@ -776,6 +780,10 @@ function stopRecording() {
 }
 
 async function toggleRecord(file, btn) {
+  if (typeof MediaRecorder === 'undefined') {
+    alert('تسجيل الصوت غير مدعوم بهالمتصفح — استخدم كروم');
+    return;
+  }
   if (recorder && recTarget === file) { recorder.stop(); return; }
   if (recorder) { recorder.stop(); }
   try {
@@ -807,6 +815,9 @@ async function toggleRecord(file, btn) {
 async function renderAdminList() {
   const list = document.getElementById('admin-list');
   if (!list) return;
+  /* قراءة واحدة مجمعة لأسماء التسجيلات — بدل ٥٥ قراءة متتالية كانت تجمّد التلفون */
+  let have = new Set();
+  try { have = new Set(await idbKeys()); } catch (e) { /* قاعدة غير متاحة */ }
   list.innerHTML = '';
   const groups = {};
   VOICE_SLOTS.forEach(s => { (groups[s.group] = groups[s.group] || []).push(s); });
@@ -816,7 +827,7 @@ async function renderAdminList() {
     sum.textContent = g + ' (' + groups[g].length + ')';
     det.appendChild(sum);
     for (const slot of groups[g]) {
-      const has = !!(await idbGet(slot.file));
+      const has = have.has(slot.file);
       const row = document.createElement('div');
       row.className = 'slot-row' + (has ? ' recorded' : '');
       row.innerHTML =
@@ -980,7 +991,7 @@ window.__boot = 'fonts';
 
   window.__boot = 'levels';
   window.__letters = LETTERS_ALL;
-  const V = '?v=3';
+  const V = '?v=4';
   await import('./level1.js' + V).catch(err => {
     window.__loadErrors = (window.__loadErrors || []).concat(['level1: ' + (err && err.stack ? err.stack.split('\n').slice(0, 3).join(' | ') : err)]);
   });
