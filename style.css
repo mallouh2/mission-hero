@@ -16,7 +16,8 @@ body {
 #admin { position: fixed; inset: 0; z-index: 40; display: none;
   align-items: center; justify-content: center; background: rgba(45,52,54,.6); padding: .8rem; }
 .admin-card { background: #fff; border-radius: 22px; border: 5px solid #a29bfe;
-  width: min(96vw, 34rem); max-height: 92vh; display: flex; flex-direction: column; padding: 1rem; }
+  width: min(96vw, 34rem); max-height: 92vh; display: flex; flex-direction: column;
+  padding: 1rem; overflow: hidden; }
 .admin-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: .5rem; }
 .admin-head b { color: #2d3436; }
 #admin-close { border: none; background: #dfe6e9; border-radius: 50%; width: 2.2rem; height: 2.2rem;
@@ -27,7 +28,11 @@ body {
 #admin-enter { font-family: inherit; font-weight: 800; cursor: pointer; margin-inline-start: .5rem;
   background: #6c5ce7; color: #fff; border: none; border-radius: 12px; padding: .5rem 1.3rem; font-size: 1rem; }
 #admin-err { color: #d63031; font-weight: 700; margin-top: .4rem; min-height: 1.2rem; }
-#admin-list { overflow-y: auto; margin-top: .4rem; }
+#admin-list { overflow-y: auto; -webkit-overflow-scrolling: touch;
+  margin-top: .4rem; max-height: calc(92vh - 10rem); }
+#admin-export { font-family: inherit; font-weight: 800; cursor: pointer; width: 100%;
+  background: #fdcb6e; color: #2d3436; border: none; border-radius: 12px;
+  padding: .55rem; font-size: 1rem; margin-bottom: .2rem; }
 #admin-list summary { cursor: pointer; font-weight: 800; color: #2d3436; padding: .45rem .2rem; }
 .slot-row { display: flex; align-items: center; gap: .5rem; padding: .45rem .3rem;
   border-bottom: 1px solid #f0f3f5; }

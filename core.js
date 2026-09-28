@@ -164,7 +164,7 @@ export async function idbKeys() {
   });
 }
 
-/* أولوية الصوت: تسجيل محلي (IndexedDB) → ملف audio/ → نطق آلي */
+/* أولوية الصوت: تسجيل محلي (IndexedDB) → ملف audio/ (mp3/webm/m4a) → نطق آلي */
 export async function voice(v) {
   if (!v) return;
   let settled = false;
@@ -181,12 +181,18 @@ export async function voice(v) {
       return;
     }
   } catch (e) { /* لا يوجد تسجيل محلي */ }
-  try {
-    const a = new Audio('audio/' + v.file + '.mp3');
-    a.addEventListener('error', fallbackTTS, { once: true });
-    a.addEventListener('playing', () => { settled = true; }, { once: true });
-    a.play().catch(fallbackTTS);
-  } catch (e) { fallbackTTS(); }
+  for (const ext of ['mp3', 'webm', 'm4a']) {
+    try {
+      const a = new Audio('audio/' + v.file + '.' + ext);
+      const ok = await new Promise(res => {
+        a.addEventListener('error', () => res(false), { once: true });
+        a.addEventListener('playing', () => res(true), { once: true });
+        a.play().catch(() => res(false));
+      });
+      if (ok) { settled = true; return; }
+    } catch (e) { /* الامتداد التالي */ }
+  }
+  fallbackTTS();
 }
 
 /* ---------- عناصر الصفحة ---------- */
@@ -832,6 +838,82 @@ async function renderAdminList() {
   list.querySelectorAll('.slot-del').forEach(b => b.addEventListener('click', async () => { await idbDel(b.dataset.file); renderAdminList(); }));
 }
 
+/* ---------- تصدير التسجيلات (ملف مضغوط واحد) ---------- */
+function crc32(buf) {
+  if (!crc32.table) {
+    crc32.table = new Uint32Array(256);
+    for (let n = 0; n < 256; n++) {
+      let c = n;
+      for (let k = 0; k < 8; k++) c = (c & 1) ? (0xEDB88320 ^ (c >>> 1)) : (c >>> 1);
+      crc32.table[n] = c >>> 0;
+    }
+  }
+  let crc = 0xFFFFFFFF;
+  for (let i = 0; i < buf.length; i++) crc = (crc >>> 8) ^ crc32.table[(crc ^ buf[i]) & 0xFF];
+  return (crc ^ 0xFFFFFFFF) >>> 0;
+}
+
+function buildZip(files) {
+  const enc = new TextEncoder();
+  const parts = [], central = [];
+  let offset = 0;
+  for (const f of files) {
+    const name = enc.encode(f.name);
+    const crc = crc32(f.data);
+    const local = new Uint8Array(30 + name.length);
+    const dv = new DataView(local.buffer);
+    dv.setUint32(0, 0x04034b50, true);
+    dv.setUint16(4, 20, true);
+    dv.setUint16(6, 0x0800, true);
+    dv.setUint32(14, crc, true);
+    dv.setUint32(18, f.data.length, true);
+    dv.setUint32(22, f.data.length, true);
+    dv.setUint16(26, name.length, true);
+    local.set(name, 30);
+    parts.push(local, f.data);
+    const cen = new Uint8Array(46 + name.length);
+    const cv = new DataView(cen.buffer);
+    cv.setUint32(0, 0x02014b50, true);
+    cv.setUint16(4, 20, true);
+    cv.setUint16(6, 20, true);
+    cv.setUint16(8, 0x0800, true);
+    cv.setUint32(14, crc, true);
+    cv.setUint32(18, f.data.length, true);
+    cv.setUint32(22, f.data.length, true);
+    cv.setUint16(26, name.length, true);
+    cv.setUint32(42, offset, true);
+    cen.set(name, 46);
+    central.push(cen);
+    offset += local.length + f.data.length;
+  }
+  const centralSize = central.reduce((s, c) => s + c.length, 0);
+  const end = new Uint8Array(22);
+  const ev = new DataView(end.buffer);
+  ev.setUint32(0, 0x06054b50, true);
+  ev.setUint16(8, files.length, true);
+  ev.setUint16(10, files.length, true);
+  ev.setUint32(12, centralSize, true);
+  ev.setUint32(16, offset, true);
+  return new Blob([...parts, ...central, end], { type: 'application/zip' });
+}
+
+async function exportRecordings() {
+  const keys = await idbKeys();
+  if (!keys.length) { alert('ما في تسجيلات بعد — سجّل وحدة على الأقل'); return; }
+  const files = [];
+  for (const k of keys) {
+    const blob = await idbGet(k);
+    const buf = new Uint8Array(await blob.arrayBuffer());
+    const ext = (blob.type && blob.type.includes('mp4')) ? 'm4a' : 'webm';
+    files.push({ name: k + '.' + ext, data: buf });
+  }
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(buildZip(files));
+  a.download = 'mission-hero-voices.zip';
+  a.click();
+  setTimeout(() => URL.revokeObjectURL(a.href), 8000);
+}
+
 function buildAdminUI() {
   const admin = document.createElement('div');
   admin.id = 'admin';
@@ -846,7 +928,8 @@ function buildAdminUI() {
     `<div id="admin-err"></div>` +
     `</div>` +
     `<div id="admin-body" style="display:none">` +
-    `<p class="admin-note">سجّل كل جملة بزر المايك — التسجيل بُخزّن عهالتلفون وبيُشتغل تلقائياً باللعبة بدل الكلام الآلي. للتسجيل من التلفون لازم الرابط يكون آمن (https).</p>` +
+    `<p class="admin-note">سجّل كل جملة بزر المايك — التسجيل بُخزّن عهالتلفون وبيُشتغل تلقائياً باللعبة بدل الكلام الآلي. زر التصدير بينزّل كل تسجيلاتك بملف واحد — ابعتلي ياه وبضعهن بملفات اللعبة حتى يسمعهن كل اللي بيلعبوا.</p>` +
+    `<button id="admin-export">📤 تصدير كل التسجيلات (ملف واحد)</button>` +
     `<div id="admin-list"></div>` +
     `</div>` +
     `</div>`;
@@ -863,6 +946,7 @@ function buildAdminUI() {
   });
   document.getElementById('admin-enter').addEventListener('click', adminEnter);
   document.getElementById('admin-pass').addEventListener('keydown', e => { if (e.key === 'Enter') adminEnter(); });
+  document.getElementById('admin-export').addEventListener('click', exportRecordings);
 }
 
 let adminOk = false;
