@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
+  <title>بطل المهمات — ألعاب تعليمية</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Baloo+Bhaijaan+2:wght@500;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div id="app">
+    <div id="hud">
+      <button id="btn-home" title="قائمة الألعاب">🏠</button>
+      <button id="btn-audio" title="أعد سماع المهمة">🔊</button>
+      <div id="mission-banner">…</div>
+      <div id="stars">⭐ <span id="star-count">٠</span></div>
+    </div>
+
+    <div id="scene3d"></div>
+
+    <div id="start-screen">
+      <h1>بطل المهمات</h1>
+      <p>اختار اللعبة وخلّي البنت تنفّذ المهمة! 🦸</p>
+      <div id="menu-games"></div>
+    </div>
+
+    <div id="finale">
+      <div class="card">
+        <div class="trophy">🏆</div>
+        <h2>أكملت كل المهمات!</h2>
+        <p>أنت بطل حقيقي!</p>
+        <button id="btn-again">العب من جديد</button>
+      </div>
+    </div>
+
+    <canvas id="confetti"></canvas>
+  </div>
+  <script type="module" src="core.js"></script>
+</body>
+</html>

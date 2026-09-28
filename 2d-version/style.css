@@ -1,0 +1,94 @@
+* { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+html, body { height: 100%; }
+body {
+  font-family: 'Baloo Bhaijaan 2', 'Segoe UI', system-ui, sans-serif;
+  overflow: hidden; user-select: none; touch-action: manipulation; background: #dff9fb;
+}
+#app { position: fixed; inset: 0; display: flex; flex-direction: column; }
+
+/* ===== الشريط العلوي ===== */
+#hud { z-index: 5; display: flex; align-items: center; gap: .5rem; padding: .45rem .6rem;
+  background: linear-gradient(#ffeaa7, #fdcb6e); border-bottom: 4px solid #e17055; }
+#mission-banner { flex: 1; min-width: 0; background: #fff; border: 3px solid #e17055; border-radius: 999px;
+  padding: .2rem 1rem; text-align: center; font-weight: 800; color: #2d3436;
+  font-size: clamp(.95rem, 4vw, 1.5rem); box-shadow: 0 3px 0 rgba(0,0,0,.12);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+#btn-audio { flex: none; width: 2.5rem; height: 2.5rem; font-size: 1.35rem; line-height: 1;
+  border-radius: 50%; background: #fff; border: 3px solid #e17055; cursor: pointer; }
+#stars { flex: none; background: #fff; border: 3px solid #f39c12; border-radius: 999px;
+  padding: .1rem .7rem; font-weight: 800; font-size: 1.1rem; color: #e67e22; white-space: nowrap; }
+
+/* ===== المشهد ===== */
+#scene { position: relative; flex: 1; overflow: hidden;
+  background: linear-gradient(#dff9fb 0%, #c7ecee 60%, #b2e9e4 100%); }
+#floor { position: absolute; left: 0; right: 0; bottom: 0; height: 16%;
+  background: linear-gradient(#a4783f, #8a6535); border-top: 8px solid #6d4f27; }
+
+/* الطاولة والأشكال الهدف */
+#table { position: absolute; left: 1.5%; bottom: 16%; width: 26%; max-width: 260px; z-index: 3; }
+#targets { display: flex; justify-content: space-around; align-items: flex-end; padding-bottom: 2%; }
+.target { position: relative; width: 30%; cursor: pointer; }
+.target svg { display: block; width: 100%; height: auto; overflow: visible; }
+.target.filled svg .outline { fill: rgba(255,255,255,.5); }
+.placed-glyph { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+  font-size: clamp(1.4rem, 5vw, 3rem); font-weight: 800; line-height: 1; animation: pop-in .35s; }
+#table-top { height: 16px; background: #e17055; border-radius: 8px; box-shadow: 0 7px 0 #b3553d; }
+
+/* الحروف على الأرض */
+.item { position: absolute; bottom: 17%; width: 12%; transform: translateX(-50%);
+  display: flex; align-items: flex-end; justify-content: center; cursor: pointer; z-index: 2; }
+.glyph { font-weight: 800; line-height: 1;
+  font-size: clamp(2.2rem, 9vw, 4.5rem); text-shadow: 0 4px 0 rgba(0,0,0,.12);
+  animation: idle-float 2.4s infinite alternate ease-in-out; }
+.item.wrong .glyph { animation: shake .4s; }
+
+/* ===== الشخصية ===== */
+#char { position: absolute; bottom: 16%; width: 14%; min-width: 64px; transform: translateX(-50%);
+  z-index: 4; pointer-events: none; }
+#char svg { display: block; width: 100%; height: auto; overflow: visible; }
+#char .flip { transition: transform .2s; }
+#char .leg, #char .arm { transform-box: fill-box; transform-origin: top center; }
+#char.walking .leg-l { animation: swing .32s infinite alternate ease-in-out; }
+#char.walking .leg-r { animation: swing .32s infinite alternate-reverse ease-in-out; }
+#char.walking .arm-l { animation: swing .32s infinite alternate-reverse ease-in-out; }
+#char.walking .arm-r { animation: swing .32s infinite alternate ease-in-out; }
+#char.walking .bob  { animation: bob .32s infinite alternate ease-in-out; }
+.item-slot { position: absolute; left: 50%; top: -42%; transform: translateX(-50%); }
+.item-slot .glyph { animation: none; }
+.flying { position: absolute; z-index: 8; transform: translate(-50%, -50%); pointer-events: none; }
+
+/* ===== شاشة البداية والنهاية ===== */
+#start-screen { position: absolute; inset: 0; z-index: 20; padding: 1.5rem;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1.1rem;
+  text-align: center; background: linear-gradient(160deg, #a29bfe, #74b9ff); }
+#start-screen h1 { color: #fff; font-size: clamp(2.4rem, 10vw, 4.2rem); text-shadow: 0 5px 0 rgba(0,0,0,.18); }
+#start-screen p  { color: #fff; font-size: clamp(1rem, 4vw, 1.3rem); font-weight: 600; max-width: 30rem; }
+#btn-start { font-family: inherit; font-weight: 800; cursor: pointer;
+  font-size: clamp(1.5rem, 6vw, 2.3rem); color: #2d3436; background: #ffeaa7;
+  border: 5px solid #fff; border-radius: 999px; padding: .4rem 2.4rem;
+  box-shadow: 0 8px 0 rgba(0,0,0,.18); }
+#btn-start:active { transform: translateY(4px); box-shadow: 0 4px 0 rgba(0,0,0,.18); }
+
+#finale { position: absolute; inset: 0; z-index: 25; display: none;
+  align-items: center; justify-content: center; background: rgba(45,52,54,.55); }
+#finale.show { display: flex; }
+#finale .card { background: #fff; border-radius: 28px; padding: 2rem 2.6rem; text-align: center;
+  border: 5px solid #fdcb6e; animation: pop-in .4s; }
+#finale .trophy { font-size: 4rem; }
+#finale h2 { color: #2d3436; margin: .4rem 0; }
+#finale p { color: #636e72; margin-bottom: 1rem; }
+#btn-again { font-family: inherit; font-weight: 800; cursor: pointer; font-size: 1.3rem;
+  color: #fff; background: #00b894; border: none; border-radius: 999px; padding: .55rem 1.8rem;
+  box-shadow: 0 5px 0 #00876c; }
+
+#confetti { position: fixed; inset: 0; z-index: 30; pointer-events: none; }
+
+/* ===== حركات ===== */
+@keyframes swing   { from { transform: rotate(16deg); } to { transform: rotate(-16deg); } }
+@keyframes bob     { from { transform: translateY(0); }  to { transform: translateY(-4%); } }
+@keyframes idle-float { from { transform: translateY(0); } to { transform: translateY(-7px); } }
+@keyframes shake   { 0%,100% { transform: translateX(0); } 25% { transform: translateX(-7px); } 75% { transform: translateX(7px); } }
+@keyframes pulse   { 0%,100% { transform: scale(1); } 50% { transform: scale(1.13); } }
+@keyframes pop-in  { from { transform: scale(0); } to { transform: scale(1); } }
+.target.correct-hint { animation: pulse .9s infinite; }
+.target.wrong { animation: shake .4s !important; }
