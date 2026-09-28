@@ -9,8 +9,39 @@ body {
 /* ===== الشريط العلوي ===== */
 #hud { z-index: 5; display: flex; align-items: center; gap: .5rem; padding: .45rem .6rem;
   background: linear-gradient(#ffeaa7, #fdcb6e); border-bottom: 4px solid #e17055; }
-#btn-home, #btn-audio { flex: none; width: 2.5rem; height: 2.5rem; font-size: 1.35rem; line-height: 1;
+#btn-home, #btn-audio, #btn-admin { flex: none; width: 2.5rem; height: 2.5rem; font-size: 1.35rem; line-height: 1;
   border-radius: 50%; background: #fff; border: 3px solid #e17055; cursor: pointer; padding: 0; }
+
+/* ===== لوحة تحكم التسجيلات ===== */
+#admin { position: fixed; inset: 0; z-index: 40; display: none;
+  align-items: center; justify-content: center; background: rgba(45,52,54,.6); padding: .8rem; }
+.admin-card { background: #fff; border-radius: 22px; border: 5px solid #a29bfe;
+  width: min(96vw, 34rem); max-height: 92vh; display: flex; flex-direction: column; padding: 1rem; }
+.admin-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: .5rem; }
+.admin-head b { color: #2d3436; }
+#admin-close { border: none; background: #dfe6e9; border-radius: 50%; width: 2.2rem; height: 2.2rem;
+  font-size: 1.1rem; cursor: pointer; }
+#admin-login p, .admin-note { color: #636e72; font-size: .92rem; line-height: 1.5; }
+#admin-pass { width: 60%; font-family: inherit; font-size: 1.1rem; padding: .4rem .8rem;
+  border: 3px solid #a29bfe; border-radius: 12px; }
+#admin-enter { font-family: inherit; font-weight: 800; cursor: pointer; margin-inline-start: .5rem;
+  background: #6c5ce7; color: #fff; border: none; border-radius: 12px; padding: .5rem 1.3rem; font-size: 1rem; }
+#admin-err { color: #d63031; font-weight: 700; margin-top: .4rem; min-height: 1.2rem; }
+#admin-list { overflow-y: auto; margin-top: .4rem; }
+#admin-list summary { cursor: pointer; font-weight: 800; color: #2d3436; padding: .45rem .2rem; }
+.slot-row { display: flex; align-items: center; gap: .5rem; padding: .45rem .3rem;
+  border-bottom: 1px solid #f0f3f5; }
+.slot-row.recorded { background: #eafaf1; }
+.slot-info { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.slot-info b { color: #6c5ce7; font-size: .8rem; direction: ltr; text-align: right; }
+.slot-info span { color: #2d3436; font-size: .92rem; font-weight: 600; line-height: 1.3; }
+.slot-btns { flex: none; display: flex; gap: .3rem; }
+.slot-play, .slot-rec, .slot-del { font-family: inherit; cursor: pointer; border: none;
+  border-radius: 10px; padding: .4rem .55rem; font-size: .85rem; font-weight: 800; }
+.slot-play { background: #74b9ff; color: #fff; }
+.slot-rec { background: #00b894; color: #fff; }
+.slot-rec.recording { background: #d63031; animation: pulse 1s infinite; }
+.slot-del { background: #fab1a0; color: #fff; }
 #mission-banner { flex: 1; min-width: 0; background: #fff; border: 3px solid #e17055; border-radius: 999px;
   padding: .1rem 1rem; text-align: center; font-weight: 800; color: #2d3436;
   font-size: clamp(.95rem, 4vw, 1.5rem); box-shadow: 0 3px 0 rgba(0,0,0,.12); line-height: 1.35; }

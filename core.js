@@ -33,6 +33,42 @@ export const LETTERS_ALL = [
   { ch: 'و', name: 'الواو' },   { ch: 'ي', name: 'الياء' },
 ];
 export const TREES = [{ x: -5.2, z: -5.0 }, { x: 0, z: -7.6 }, { x: 5.2, z: -5.0 }];
+
+/* جُمل وصفات المطبخ الثابتة (مصدر واحد للعبة ولوحة التسجيل) */
+export const RECIPE_SENTENCES = {
+  apple:      { 1: 'أحضر لي تفاحة حمرا وحدة!', 2: 'أحضر لي تفاحتين حمراوين!' },
+  apple3:     { 3: 'أحضر لي ثلاث فواكه حمراء!' },
+  zbeeteh:    { 1: 'أحضر لي زبطة حمرا وحدة!', 2: 'أحضر لي زبطتين حمراوين!' },
+  greenApple: { 1: 'أحضر لي تفاحة خضرا وحدة!' },
+  banana:     { 1: 'أحضر لي موزة صفرا وحدة!', 2: 'أحضر لي موزتين صفر!' },
+  lemon:      { 1: 'أحضر لي ليمونة صفرا وحدة!' },
+  orange:     { 1: 'أحضر لي برتقالة وحدة!' },
+  grapes:     { 1: 'أحضر لي عنقودة بنفسجية وحدة!' },
+};
+
+/* سجل كل جُمل اللعبة القابلة للتسجيل (للوحة التحكم) */
+export const VOICE_SLOTS = [
+  { group: 'عامة', file: 'hint_first', text: 'أولاً أحضر الحرف!' },
+  { group: 'عامة', file: 'hint_carry', text: 'ممتاز! الآن ضعه في مكانه الصحيح.' },
+  { group: 'عامة', file: 'praise_1', text: 'أحسنت!' },
+  { group: 'عامة', file: 'praise_2', text: 'رائع جداً!' },
+  { group: 'عامة', file: 'praise_3', text: 'برافو عليك!' },
+  { group: 'عامة', file: 'retry_1', text: 'حاول مرة ثانية، أنت تقدر!' },
+  { group: 'عامة', file: 'retry_2', text: 'ليس هذا! انظر جيداً!' },
+  { group: 'عامة', file: 'done', text: 'أكملت كل المهمات! أنت بطل حقيقي!' },
+  { group: 'جزيرة الحروف', file: 'mission_1', text: 'أحضر حرف الألف، وضعه في المربع الأحمر!' },
+  { group: 'جزيرة الحروف', file: 'mission_2', text: 'أحضر حرف الباء، وضعه في الدائرة الزرقاء!' },
+  { group: 'جزيرة الحروف', file: 'mission_3', text: 'أحضر حرف التاء، وضعه في المثلث الأصفر!' },
+  { group: 'جزيرة الحروف', file: 'mission_4', text: 'أحضر حرف الثاء، وضعه في النجمة الخضراء!' },
+  { group: 'جزيرة الحروف', file: 'mission_5', text: 'أحضر حرف الجيم، وضعه في المربع الأزرق!' },
+  { group: 'جزيرة الحروف', file: 'mission_6', text: 'أحضر حرف الدال، وضعه في الدائرة الحمراء!' },
+  { group: 'حيوانات الحروف', file: 'intro_animals', text: 'أهلاً! كل حيوان هنا بيبلش اسمو بحرف معين. اضغط على الحرف، وبعدين اضغط على الحيوان حتى تطعمه ياه!' },
+  ...LETTERS_ALL.map(l => ({ group: 'أسماء الحروف (المرحلة ٢)', file: 'letter_' + l.ch, text: l.name })),
+  { group: 'مطبخ الوصفات', file: 'intro_kitchen', text: 'أهلاً بالمطبخ! اسمع الوصفة واضغط على الفواكه الصح حتى نطبخ مع بعض!' },
+  ...Object.keys(RECIPE_SENTENCES).flatMap(k =>
+    Object.keys(RECIPE_SENTENCES[k]).map(n => ({ group: 'مطبخ الوصفات', file: 'recipe_' + k + '_' + n, text: RECIPE_SENTENCES[k][n] }))
+  ),
+];
 export const SPOTS = [[-3.2, 2.6], [0, 4.2], [3.2, 2.6], [0, 1.0]];
 export const PRAISE = [
   { file: 'praise_1', text: 'أحسنت!' },
@@ -84,16 +120,73 @@ export function tts(text) {
   } catch (e) { /* لا شيء */ }
 }
 
-export function voice(v) {
+/* ---------- مخزن التسجيلات المحلي (IndexedDB) ---------- */
+function idbOpen() {
+  return new Promise((res, rej) => {
+    const rq = indexedDB.open('mission-hero-voices', 1);
+    rq.onupgradeneeded = () => rq.result.createObjectStore('voices');
+    rq.onsuccess = () => res(rq.result);
+    rq.onerror = () => rej(rq.error);
+  });
+}
+export async function idbGet(key) {
+  const db = await idbOpen();
+  return new Promise((res, rej) => {
+    const rq = db.transaction('voices').objectStore('voices').get(key);
+    rq.onsuccess = () => res(rq.result || null);
+    rq.onerror = () => rej(rq.error);
+  });
+}
+export async function idbPut(key, blob) {
+  const db = await idbOpen();
+  return new Promise((res, rej) => {
+    const tx = db.transaction('voices', 'readwrite');
+    tx.objectStore('voices').put(blob, key);
+    tx.oncomplete = () => res();
+    tx.onerror = () => rej(tx.error);
+  });
+}
+export async function idbDel(key) {
+  const db = await idbOpen();
+  return new Promise((res, rej) => {
+    const tx = db.transaction('voices', 'readwrite');
+    tx.objectStore('voices').delete(key);
+    tx.oncomplete = () => res();
+    tx.onerror = () => rej(tx.error);
+  });
+}
+export async function idbKeys() {
+  const db = await idbOpen();
+  return new Promise((res, rej) => {
+    const rq = db.transaction('voices').objectStore('voices').getAllKeys();
+    rq.onsuccess = () => res(rq.result || []);
+    rq.onerror = () => rej(rq.error);
+  });
+}
+
+/* أولوية الصوت: تسجيل محلي (IndexedDB) → ملف audio/ → نطق آلي */
+export async function voice(v) {
   if (!v) return;
   let settled = false;
-  const fallback = () => { if (!settled) { settled = true; tts(v.text); } };
+  const fallbackTTS = () => { if (!settled) { settled = true; tts(v.text); } };
+  try {
+    const blob = await idbGet(v.file);
+    if (blob) {
+      const url = URL.createObjectURL(blob);
+      const a = new Audio(url);
+      a.addEventListener('ended', () => URL.revokeObjectURL(url), { once: true });
+      a.addEventListener('playing', () => { settled = true; }, { once: true });
+      a.addEventListener('error', fallbackTTS, { once: true });
+      await a.play().catch(fallbackTTS);
+      return;
+    }
+  } catch (e) { /* لا يوجد تسجيل محلي */ }
   try {
     const a = new Audio('audio/' + v.file + '.mp3');
-    a.addEventListener('error', fallback, { once: true });
+    a.addEventListener('error', fallbackTTS, { once: true });
     a.addEventListener('playing', () => { settled = true; }, { once: true });
-    a.play().catch(fallback);
-  } catch (e) { fallback(); }
+    a.play().catch(fallbackTTS);
+  } catch (e) { fallbackTTS(); }
 }
 
 /* ---------- عناصر الصفحة ---------- */
@@ -668,6 +761,127 @@ window.__pump = secs => {
   return window.__boot;
 };
 
+/* ---------- لوحة تحكم التسجيلات (محمية بكلمة سر) ---------- */
+const ADMIN_PASS = 'Ws@650860';
+let recorder = null, recTarget = null;
+
+function stopRecording() {
+  if (recorder && recorder.state === 'recording') recorder.stop();
+}
+
+async function toggleRecord(file, btn) {
+  if (recorder && recTarget === file) { recorder.stop(); return; }
+  if (recorder) { recorder.stop(); }
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    const mime = MediaRecorder.isTypeSupported('audio/webm;codecs=opus') ? 'audio/webm;codecs=opus'
+      : (MediaRecorder.isTypeSupported('audio/mp4') ? 'audio/mp4' : '');
+    recorder = new MediaRecorder(stream, mime ? { mimeType: mime } : undefined);
+    recTarget = file;
+    const chunks = [];
+    recorder.ondataavailable = e => { if (e.data.size) chunks.push(e.data); };
+    recorder.onstop = async () => {
+      stream.getTracks().forEach(t => t.stop());
+      const blob = new Blob(chunks, { type: recorder.mimeType || 'audio/webm' });
+      recorder = null; recTarget = null;
+      await idbPut(file, blob);
+      Sfx.ding();
+      renderAdminList();
+    };
+    recorder.start();
+    document.querySelectorAll('.slot-rec').forEach(b => { b.textContent = '🎙 تسجيل'; b.classList.remove('recording'); });
+    btn.textContent = '⏹ أوقف';
+    btn.classList.add('recording');
+  } catch (e) {
+    recorder = null; recTarget = null;
+    alert('ما قدرنا نفتح المايك: ' + (e && e.message ? e.message : e));
+  }
+}
+
+async function renderAdminList() {
+  const list = document.getElementById('admin-list');
+  if (!list) return;
+  list.innerHTML = '';
+  const groups = {};
+  VOICE_SLOTS.forEach(s => { (groups[s.group] = groups[s.group] || []).push(s); });
+  for (const g of Object.keys(groups)) {
+    const det = document.createElement('details');
+    const sum = document.createElement('summary');
+    sum.textContent = g + ' (' + groups[g].length + ')';
+    det.appendChild(sum);
+    for (const slot of groups[g]) {
+      const has = !!(await idbGet(slot.file));
+      const row = document.createElement('div');
+      row.className = 'slot-row' + (has ? ' recorded' : '');
+      row.innerHTML =
+        `<div class="slot-info"><b>${slot.file}</b><span>${slot.text}</span></div>` +
+        `<div class="slot-btns">` +
+        `<button class="slot-play" data-file="${slot.file}">▶</button>` +
+        `<button class="slot-rec" data-file="${slot.file}">🎙 تسجيل</button>` +
+        (has ? `<button class="slot-del" data-file="${slot.file}">🗑</button>` : '') +
+        `</div>`;
+      det.appendChild(row);
+    }
+    list.appendChild(det);
+  }
+  list.querySelectorAll('.slot-play').forEach(b => b.addEventListener('click', () => {
+    const slot = VOICE_SLOTS.find(s => s.file === b.dataset.file);
+    if (slot) voice(slot);
+  }));
+  list.querySelectorAll('.slot-rec').forEach(b => b.addEventListener('click', () => toggleRecord(b.dataset.file, b)));
+  list.querySelectorAll('.slot-del').forEach(b => b.addEventListener('click', async () => { await idbDel(b.dataset.file); renderAdminList(); }));
+}
+
+function buildAdminUI() {
+  const admin = document.createElement('div');
+  admin.id = 'admin';
+  admin.style.display = 'none';
+  admin.innerHTML =
+    `<div class="admin-card">` +
+    `<div class="admin-head"><b>🔒 لوحة التحكم — أصوات اللعبة</b><button id="admin-close">✖</button></div>` +
+    `<div id="admin-login">` +
+    `<p>هاي اللوحة للأهل — اكتب كلمة السر حتى تسجّل أصواتك باللعبة:</p>` +
+    `<input id="admin-pass" type="password" autocomplete="off" placeholder="كلمة السر" />` +
+    `<button id="admin-enter">دخول</button>` +
+    `<div id="admin-err"></div>` +
+    `</div>` +
+    `<div id="admin-body" style="display:none">` +
+    `<p class="admin-note">سجّل كل جملة بزر المايك — التسجيل بُخزّن عهالتلفون وبيُشتغل تلقائياً باللعبة بدل الكلام الآلي. للتسجيل من التلفون لازم الرابط يكون آمن (https).</p>` +
+    `<div id="admin-list"></div>` +
+    `</div>` +
+    `</div>`;
+  document.getElementById('app').appendChild(admin);
+  document.getElementById('btn-admin').addEventListener('click', () => {
+    admin.style.display = 'flex';
+    document.getElementById('admin-login').style.display = adminOk ? 'none' : 'block';
+    document.getElementById('admin-body').style.display = adminOk ? 'block' : 'none';
+    if (adminOk) renderAdminList();
+  });
+  document.getElementById('admin-close').addEventListener('click', () => {
+    stopRecording();
+    admin.style.display = 'none';
+  });
+  document.getElementById('admin-enter').addEventListener('click', adminEnter);
+  document.getElementById('admin-pass').addEventListener('keydown', e => { if (e.key === 'Enter') adminEnter(); });
+}
+
+let adminOk = false;
+function adminEnter() {
+  const input = document.getElementById('admin-pass');
+  if (input.value === ADMIN_PASS) {
+    adminOk = true;
+    document.getElementById('admin-err').textContent = '';
+    document.getElementById('admin-login').style.display = 'none';
+    document.getElementById('admin-body').style.display = 'block';
+    renderAdminList();
+  } else {
+    document.getElementById('admin-err').textContent = 'كلمة السر غلط — حاول مرة ثانية';
+    input.value = '';
+    Sfx.wrong();
+  }
+}
+buildAdminUI();
+
 /* ---------- تشغيل ---------- */
 /* ملاحظة: لا يستخدم core.js أي await بمستواه الأعلى حتى يكتمل تقييمه
    قبل أن تستورد ملفات المراحل ثنائياً — وإلا حدث جمود دوري (deadlock). */
@@ -687,6 +901,9 @@ window.__boot = 'fonts';
   });
   await import('./level2.js').catch(err => {
     window.__loadErrors = (window.__loadErrors || []).concat(['level2: ' + (err && err.message ? err.message : err)]);
+  });
+  await import('./level3.js').catch(err => {
+    window.__loadErrors = (window.__loadErrors || []).concat(['level3: ' + (err && err.message ? err.message : err)]);
   });
   window.__boot = 'menu';
   renderMenu();
