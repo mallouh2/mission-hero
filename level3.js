@@ -12,7 +12,7 @@ import {
   Sfx, voice, banner, setStars, world, scene, billboard, tween, easeIO,
   addPickable, clearPickables, addUpdater, buildIsland, registerGame,
   setReplay, girlWalkTo, carryAnchor, burst, arNum,
-} from './core.js?v=5';
+} from './core.js?v=6';
 
 const INSTR = {
   file: 'intro_kitchen',

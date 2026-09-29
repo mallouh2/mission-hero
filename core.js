@@ -323,12 +323,15 @@ export let carryAnchor;
   girl.add(dress);
   const armL = new THREE.Mesh(new THREE.CylinderGeometry(.09, .08, .64, 10), skinM);
   armL.geometry.translate(0, -.32, 0);
-  armL.position.set(-.52, 1.78, 0);
-  armL.rotation.z = .3;
+  armL.position.set(-.5, 1.86, 0);
+  armL.rotation.z = -.45; // مايلة لبرا بوضوح — مش جوا الفستان
+  const handL = new THREE.Mesh(new THREE.SphereGeometry(.11, 10, 8), skinM);
+  handL.position.y = -.64;
+  armL.add(handL);
   girl.add(armL);
   const armR = armL.clone();
-  armR.position.x = .52;
-  armR.rotation.z = -.3;
+  armR.position.x = .5;
+  armR.rotation.z = .45;
   girl.add(armR);
   const head = new THREE.Mesh(new THREE.SphereGeometry(.52, 18, 14), skinM);
   head.position.y = 2.42;
@@ -1001,7 +1004,7 @@ window.__boot = 'fonts';
 
   window.__boot = 'levels';
   window.__letters = LETTERS_ALL;
-  const V = '?v=5';
+  const V = '?v=6';
   await import('./level1.js' + V).catch(err => {
     window.__loadErrors = (window.__loadErrors || []).concat(['level1: ' + (err && err.stack ? err.stack.split('\n').slice(0, 3).join(' | ') : err)]);
   });
