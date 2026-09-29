@@ -9,7 +9,7 @@ import {
   Sfx, voice, banner, setStars, world, billboard, tween, easeIO,
   addFruit, clearFruits, pickFruit, takeCarried, addPickable, clearPickables, addUpdater,
   buildIsland, registerGame, setReplay, girlWalkTo, burst, bigBurst,
-} from './core.js?v=7';
+} from './core.js?v=8';
 
 const SHAPES = {
   square:   { name: 'المربع',  fem: false },

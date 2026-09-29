@@ -12,7 +12,7 @@ import {
   Sfx, voice, banner, setStars, world, scene, billboard, tween, easeIO,
   addFruit, clearFruits, pickFruit, takeCarried, addPickable, clearPickables,
   addUpdater, buildIsland, registerGame, setReplay, girlWalkTo, burst,
-} from './core.js?v=7';
+} from './core.js?v=8';
 
 const INSTR = {
   file: 'intro_animals',
@@ -37,7 +37,7 @@ const ANIMALS = {
   'ص': { name: 'صقر',         emoji: '🦅' },
   'ض': { name: 'ضفدع',        emoji: '🐸' },
   'ط': { name: 'طاووس',       emoji: '🦚' },
-  'ظ': { name: 'ظربان',       emoji: '🐿️' },
+  'ظ': { name: 'ظربان',       emoji: '🦨' },
   'ع': { name: 'عصفور',       emoji: '🐦' },
   'غ': { name: 'غزال',        emoji: '🦌' },
   'ف': { name: 'فيل',         emoji: '🐘' },
@@ -172,7 +172,7 @@ function animalTexture(info) {
 
 function labelTexture(name, accent) {
   const cv = document.createElement('canvas');
-  cv.width = 512; cv.height = 160;
+  cv.width = 512; cv.height = 224; /* ارتفاع أوسع — نقط الحروف العالية (قـ، غـ، نـ) ما تنقص */
   const c = cv.getContext('2d');
   c.textBaseline = 'middle';
   c.textAlign = 'center';
@@ -183,18 +183,24 @@ function labelTexture(name, accent) {
   const head = CONNECTS ? first + 'ـ' : first;
   c.font = '800 128px "Baloo Bhaijaan 2", sans-serif';
   const w1 = c.measureText(head).width;
+  const asc1 = c.measureText(head).actualBoundingBoxAscent || 100;
   c.font = '800 96px "Baloo Bhaijaan 2", sans-serif';
   const w2 = c.measureText(rest).width;
+  const asc2 = c.measureText(rest).actualBoundingBoxAscent || 80;
   const rightX = 256 + (w1 + w2) / 2;
+  /* تموضع عمودي تلقائي: هامش ١٤px فوق أعلى نقطة مقيسة فعلياً (الهمزات والنقط بأمان) */
+  const headY = 14 + Math.max(asc1, asc2);
+  const restY = headY + 6;
   c.font = '800 128px "Baloo Bhaijaan 2", sans-serif';
-  c.lineWidth = 16; c.strokeStyle = 'rgba(0,0,0,.5)';
-  c.strokeText(head, rightX - w1 / 2, 74);
+  c.lineWidth = 14; c.strokeStyle = 'rgba(0,0,0,.5)';
+  c.strokeText(head, rightX - w1 / 2, headY);
   c.fillStyle = accent;
-  c.fillText(head, rightX - w1 / 2, 74);
+  c.fillText(head, rightX - w1 / 2, headY);
   c.font = '800 96px "Baloo Bhaijaan 2", sans-serif';
-  c.strokeText(rest, rightX - w1 - w2 / 2, 80);
+  c.lineWidth = 12; c.strokeStyle = 'rgba(0,0,0,.5)';
+  c.strokeText(rest, rightX - w1 - w2 / 2, restY);
   c.fillStyle = '#fff';
-  c.fillText(rest, rightX - w1 - w2 / 2, 80);
+  c.fillText(rest, rightX - w1 - w2 / 2, restY);
   const tex = new THREE.CanvasTexture(cv);
   tex.colorSpace = THREE.SRGBColorSpace;
   return tex;
@@ -242,10 +248,10 @@ function makeAnimal(ch, spot) {
   const colorKeys = Object.keys(COLORS);
   const accentCss = COLORS[colorKeys[Math.floor(Math.random() * colorKeys.length)]].css;
   const label = new THREE.Mesh(
-    new THREE.PlaneGeometry(2.9, .9),
+    new THREE.PlaneGeometry(2.9, 1.27), /* بنسبة 512×224 حتى لا تنقص النقط */
     new THREE.MeshBasicMaterial({ map: labelTexture(info.name, accentCss), transparent: true, depthWrite: false })
   );
-  label.position.set(spot[0], 2.95, spot[1]);
+  label.position.set(spot[0], 3.05, spot[1]);
   world.add(label);
 
   const dir = new THREE.Vector3(spot[0], 0, spot[1] - 1.2);
@@ -462,5 +468,47 @@ window.__spawnAnimal = (ch, x = 0, z = 4.2) => {
   const rec = makeAnimal(ch, [x, z]);
   addPickable(rec);
   animals.push(rec);
-  return rec.name;
+  return rec;
+};
+/* فحص جودة اللوحات والرسومات — يرجعن كصور */
+window.__labelDataURL = ch => labelTexture(ANIMALS[ch].name, '#e74c3c').image.toDataURL('image/png');
+window.__animalDataURL = ch => animalTexture(ANIMALS[ch]).image.toDataURL('image/png');
+window.__labelInk = ch => {
+  /* توزيع الحبر عمودياً بلوحة الاسم — الكشف عن قصّ النقط العلوية */
+  const cv = labelTexture(ANIMALS[ch].name, '#e74c3c').image;
+  const c = cv.getContext('2d');
+  const d = c.getImageData(0, 0, cv.width, cv.height).data;
+  let top = 0, mid = 0, bottom = 0, colored = 0, topRow = -1;
+  for (let y = 0; y < cv.height; y++) {
+    for (let x = 0; x < cv.width; x++) {
+      const i = (y * cv.width + x) * 4;
+      if (d[i + 3] > 40) {
+        if (topRow < 0) topRow = y;
+        if (y < cv.height * .3) top++;
+        else if (y < cv.height * .7) mid++;
+        else bottom++;
+        const mx = Math.max(d[i], d[i + 1], d[i + 2]), mn = Math.min(d[i], d[i + 1], d[i + 2]);
+        if (mx - mn > 40) colored++;
+      }
+    }
+  }
+  return { w: cv.width, h: cv.height, top, mid, bottom, colored, topRow };
+};
+window.__animalColored = ch => {
+  /* نسبة البيكسلات الملونة بصورة الحيوان — كشف إيموجي مكسور (مربع فاضي) */
+  const cv = animalTexture(ANIMALS[ch]).image;
+  const c = cv.getContext('2d');
+  const d = c.getImageData(0, 0, cv.width, cv.height).data;
+  let ink = 0, colored = 0;
+  for (let y = 0; y < cv.height; y++) {
+    for (let x = 0; x < cv.width; x++) {
+      const i = (y * cv.width + x) * 4;
+      if (d[i + 3] > 40) {
+        ink++;
+        const mx = Math.max(d[i], d[i + 1], d[i + 2]), mn = Math.min(d[i], d[i + 1], d[i + 2]);
+        if (mx - mn > 40) colored++;
+      }
+    }
+  }
+  return { ink, colored, ratio: ink ? +(colored / ink).toFixed(2) : 0 };
 };

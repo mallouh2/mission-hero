@@ -1081,7 +1081,7 @@ window.__boot = 'fonts';
 
   window.__boot = 'levels';
   window.__letters = LETTERS_ALL;
-  const V = '?v=7';
+  const V = '?v=8';
   await import('./level1.js' + V).catch(err => {
     window.__loadErrors = (window.__loadErrors || []).concat(['level1: ' + (err && err.stack ? err.stack.split('\n').slice(0, 3).join(' | ') : err)]);
   });
