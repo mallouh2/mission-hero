@@ -4,7 +4,7 @@ body {
   font-family: 'Baloo Bhaijaan 2', 'Segoe UI', system-ui, sans-serif;
   overflow: hidden; user-select: none; touch-action: manipulation; background: #9be7ff;
 }
-#app { position: fixed; inset: 0; display: flex; flex-direction: column; }
+#app { position: fixed; top: 0; left: 0; right: 0; bottom: 0; display: flex; flex-direction: column; }
 
 /* ===== الشريط العلوي ===== */
 #hud { z-index: 5; display: flex; align-items: center; gap: .5rem; padding: .45rem .6rem;
@@ -13,7 +13,7 @@ body {
   border-radius: 50%; background: #fff; border: 3px solid #e17055; cursor: pointer; padding: 0; }
 
 /* ===== لوحة تحكم التسجيلات ===== */
-#admin { position: fixed; inset: 0; z-index: 40; display: none;
+#admin { position: fixed; top: 0; left: 0; right: 0; bottom: 0; z-index: 40; display: none;
   align-items: center; justify-content: center; background: rgba(45,52,54,.6); padding: .8rem; }
 .admin-card { background: #fff; border-radius: 22px; border: 5px solid #a29bfe;
   width: min(96vw, 34rem); max-height: 92vh; display: flex; flex-direction: column;
@@ -22,11 +22,14 @@ body {
 .admin-head b { color: #2d3436; }
 #admin-close { border: none; background: #dfe6e9; border-radius: 50%; width: 2.2rem; height: 2.2rem;
   font-size: 1.1rem; cursor: pointer; }
+#admin-login { display: flex; flex-direction: column; gap: .6rem; }
 #admin-login p, .admin-note { color: #636e72; font-size: .92rem; line-height: 1.5; }
-#admin-pass { width: 60%; font-family: inherit; font-size: 1.1rem; padding: .4rem .8rem;
-  border: 3px solid #a29bfe; border-radius: 12px; }
-#admin-enter { font-family: inherit; font-weight: 800; cursor: pointer; margin-inline-start: .5rem;
-  background: #6c5ce7; color: #fff; border: none; border-radius: 12px; padding: .5rem 1.3rem; font-size: 1rem; }
+#admin-pass { width: 100%; font-family: inherit; font-size: 1.15rem; padding: .6rem .8rem;
+  border: 3px solid #a29bfe; border-radius: 12px; box-sizing: border-box; }
+#admin-enter { font-family: inherit; font-weight: 800; cursor: pointer; width: 100%;
+  background: #6c5ce7; color: #fff; border: none; border-radius: 12px; padding: .7rem; font-size: 1.15rem; }
+#admin-enter:active { background: #5847c9; }
+#admin-close:active { background: #b2bec3; }
 #admin-err { color: #d63031; font-weight: 700; margin-top: .4rem; min-height: 1.2rem; }
 #admin-list { overflow-y: auto; -webkit-overflow-scrolling: touch;
   margin-top: .4rem; max-height: calc(92vh - 10rem); }
@@ -58,7 +61,7 @@ body {
 #scene3d canvas { display: block; width: 100%; height: 100%; touch-action: none; }
 
 /* ===== شاشة البداية والنهاية ===== */
-#start-screen { position: absolute; inset: 0; z-index: 20; padding: 1.5rem;
+#start-screen { position: absolute; top: 0; left: 0; right: 0; bottom: 0; z-index: 20; padding: 1.5rem;
   display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1.1rem;
   text-align: center; background: linear-gradient(160deg, rgba(162,155,254,.94), rgba(116,185,255,.94)); }
 #start-screen h1 { color: #fff; font-size: clamp(2.4rem, 10vw, 4.2rem); text-shadow: 0 5px 0 rgba(0,0,0,.18); }
@@ -79,7 +82,7 @@ body {
   box-shadow: 0 8px 0 rgba(0,0,0,.18); }
 #btn-start:active { transform: translateY(4px); box-shadow: 0 4px 0 rgba(0,0,0,.18); }
 
-#finale { position: absolute; inset: 0; z-index: 25; display: none;
+#finale { position: absolute; top: 0; left: 0; right: 0; bottom: 0; z-index: 25; display: none;
   align-items: center; justify-content: center; background: rgba(45,52,54,.55); }
 #finale.show { display: flex; }
 #finale .card { background: #fff; border-radius: 28px; padding: 2rem 2.6rem; text-align: center;
@@ -91,7 +94,7 @@ body {
   color: #fff; background: #00b894; border: none; border-radius: 999px; padding: .55rem 1.8rem;
   box-shadow: 0 5px 0 #00876c; }
 
-#confetti { position: fixed; inset: 0; z-index: 30; pointer-events: none; }
+#confetti { position: fixed; top: 0; left: 0; right: 0; bottom: 0; z-index: 30; pointer-events: none; }
 
 /* ===== حركات ===== */
 @keyframes shake   { 0%,100% { transform: translateX(0); } 25% { transform: translateX(-7px); } 75% { transform: translateX(7px); } }

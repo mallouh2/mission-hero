@@ -225,6 +225,8 @@ function resize() {
   const w = container.clientWidth || 1, h = container.clientHeight || 1;
   renderer.setSize(w, h);
   camera.aspect = w / h;
+  /* الشاشات الطولية: زاوية عرض أوسع حتى تظهر كل الأشياء مع بقاء الحجم كبير */
+  camera.fov = camera.aspect < 0.95 ? 60 : 52;
   camera.updateProjectionMatrix();
 }
 addEventListener('resize', resize);
@@ -393,10 +395,14 @@ export function resetCamera() { camTheta = 0; }
 const CAM_R = 14, CAM_H = 10.4;
 const camWant = new THREE.Vector3();
 function updateCamera(dt) {
+  /* الشاشات الطولية (تلفون): كاميرا أقرب حتى تمتلئ الشاشة باللعبة */
+  const portrait = (camera.aspect || 1) < 0.95;
+  const camR = portrait ? 11.5 : CAM_R;
+  const camH = portrait ? 8.8 : CAM_H;
   camWant.set(
-    Math.sin(camTheta) * CAM_R,
-    CAM_H,
-    Math.cos(camTheta) * CAM_R + gs.pos.z * .25
+    Math.sin(camTheta) * camR,
+    camH,
+    Math.cos(camTheta) * camR + gs.pos.z * .25
   );
   camera.position.lerp(camWant, Math.min(1, dt * 4));
   // تقييد انزياح النظرة حتى لا تنزلق الأشياء الأمامية خارج الكادر
@@ -958,6 +964,10 @@ function buildAdminUI() {
   document.getElementById('admin-enter').addEventListener('click', adminEnter);
   document.getElementById('admin-pass').addEventListener('keydown', e => { if (e.key === 'Enter') adminEnter(); });
   document.getElementById('admin-export').addEventListener('click', exportRecordings);
+  // الضغط عالخلفية الغامقة يسكّر اللوحة (هدف كبير للتلفون)
+  admin.addEventListener('click', e => {
+    if (e.target === admin) { stopRecording(); admin.style.display = 'none'; }
+  });
 }
 
 let adminOk = false;
@@ -991,7 +1001,7 @@ window.__boot = 'fonts';
 
   window.__boot = 'levels';
   window.__letters = LETTERS_ALL;
-  const V = '?v=4';
+  const V = '?v=5';
   await import('./level1.js' + V).catch(err => {
     window.__loadErrors = (window.__loadErrors || []).concat(['level1: ' + (err && err.stack ? err.stack.split('\n').slice(0, 3).join(' | ') : err)]);
   });
