@@ -7,9 +7,9 @@
 import {
   THREE, lam, COLORS, LETTERS_ALL, SPOTS, PRAISE, RETRY, HINT_FIRST,
   Sfx, voice, banner, setStars, world, billboard, tween, easeIO,
-  addFruit, pickFruit, takeCarried, addPickable, addUpdater,
+  addFruit, clearFruits, pickFruit, takeCarried, addPickable, clearPickables, addUpdater,
   buildIsland, registerGame, setReplay, girlWalkTo, burst, bigBurst,
-} from './core.js?v=6';
+} from './core.js?v=7';
 
 const SHAPES = {
   square:   { name: 'المربع',  fem: false },
@@ -68,16 +68,52 @@ function shapeFromPts(pts) {
 }
 function frameMesh(shape, colorHex) {
   const def = SHAPE_PTS[shape];
+  const g = new THREE.Group();
+  /* تعبئة داخلية شفافة حتى يبان الشكل "ملون" مش مجرد إطار */
+  const fillGeo = new THREE.ShapeGeometry(shapeFromPts(def.outer));
+  fillGeo.rotateX(-Math.PI / 2);
+  const fill = new THREE.Mesh(fillGeo, new THREE.MeshBasicMaterial({ color: colorHex, transparent: true, opacity: .2, depthWrite: false }));
+  fill.renderOrder = 1;
+  g.add(fill);
   const sh = shapeFromPts(def.outer);
   sh.holes.push(shapeFromPts(ptsScaled(def.outer, def.k)));
-  const geo = new THREE.ShapeGeometry(sh);
-  geo.rotateX(-Math.PI / 2);
-  return new THREE.Mesh(geo, new THREE.MeshBasicMaterial({ color: colorHex }));
+  const ringGeo = new THREE.ShapeGeometry(sh);
+  ringGeo.rotateX(-Math.PI / 2);
+  const ring = new THREE.Mesh(ringGeo, new THREE.MeshBasicMaterial({ color: colorHex }));
+  ring.position.y = .012;
+  ring.renderOrder = 2;
+  g.add(ring);
+  return g;
 }
 
 /* حالة المرحلة */
 let idx = 0, stars = 0, phase = 'idle', mission = null;
 let targets = [], placedPlanes = [];
+
+/* إزالة عناصر المهمة السابقة — بدونها تتراكم الأشكال القديمة وتتداخل مناطق لمسها
+   فيضرب الطفل الشكل الصحيح وتُحسب غلط */
+function clearMission() {
+  clearFruits();
+  clearPickables();
+  targets.forEach(t => {
+    t.frame.traverse(o => {
+      if (o.geometry) o.geometry.dispose();
+      if (o.material) o.material.dispose();
+    });
+    t.frame.removeFromParent();
+    t.hit.geometry.dispose();
+    t.hit.material.dispose();
+    t.hit.removeFromParent();
+  });
+  placedPlanes.forEach(p => {
+    p.removeFromParent();
+    p.geometry.dispose();
+    if (p.material.map) p.material.map.dispose();
+    p.material.dispose();
+  });
+  targets = [];
+  placedPlanes = [];
+}
 
 function shakeMesh(rec) {
   const base = rec.pivot ? rec.pivot.rotation.z : 0;
@@ -90,12 +126,11 @@ function shakeMesh(rec) {
 }
 
 function buildMission(i) {
+  clearMission();
   idx = i;
   phase = 'idle';
   mission = MISSIONS[i];
   banner.textContent = mission.text;
-  targets = [];
-  placedPlanes = [];
 
   /* أشكال الأرض: الصحيح + مشتّتين */
   const combos = Object.keys(SHAPES).flatMap(s => Object.keys(COLORS).map(c => s + '_' + c));
@@ -108,7 +143,7 @@ function buildMission(i) {
     frame.position.set(spots[n][0], 0.04, spots[n][1]);
     world.add(frame);
     const hit = new THREE.Mesh(
-      new THREE.CylinderGeometry(2.1, 2.1, .9, 12),
+      new THREE.CylinderGeometry(1.45, 1.45, .9, 12),
       new THREE.MeshBasicMaterial({ transparent: true, opacity: 0, depthWrite: false })
     );
     hit.position.set(spots[n][0], .45, spots[n][1]);
@@ -141,7 +176,8 @@ function buildMission(i) {
 }
 
 function onTapFruit(rec) {
-  if (phase === 'busy' || phase === 'carrying') return;
+  if (phase === 'busy') return;
+  if (phase === 'carrying') { voice(HINT_CARRY); return; }
   if (rec.ch === mission.letter) {
     phase = 'busy';
     pickFruit(rec, () => {
@@ -245,4 +281,9 @@ registerGame({
   start: startLevel1,
 });
 
-window.__state = () => ({ phase, idx, stars, mission: mission ? mission.letter : null });
+window.__state = () => ({
+  phase, idx, stars,
+  mission: mission ? mission.letter : null,
+  shape: mission ? mission.shape : null,
+  color: mission ? mission.color : null,
+});

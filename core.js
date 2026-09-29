@@ -237,6 +237,11 @@ const sun = new THREE.DirectionalLight(0xfff3d6, 1.1);
 sun.position.set(8, 14, 6);
 scene.add(sun);
 
+/* شمس مبتسمة بالسماء */
+const sunBall = new THREE.Mesh(new THREE.SphereGeometry(1.9, 16, 12), new THREE.MeshBasicMaterial({ color: 0xffdf6b }));
+sunBall.position.set(-15, 14, -26);
+scene.add(sunBall);
+
 /* ---------- الغيوم ---------- */
 const clouds = [];
 function cloud(x, y, z, s) {
@@ -290,6 +295,12 @@ export function buildIsland() {
       m.position.set(x, y, z);
       g.add(m);
     });
+    /* طبقة أوراق أغمق خلفية — عمق أكبر */
+    [[-.8, 3.1, -.5, 1.0], [.85, 3.2, -.55, 1.05]].forEach(([x, y, z, r]) => {
+      const m = new THREE.Mesh(new THREE.SphereGeometry(r, 10, 8), lam(0x2e8b4f));
+      m.position.set(x, y, z);
+      g.add(m);
+    });
     [[-.5, 3.0, .95], [.55, 3.05, .9]].forEach(([x, y, z]) => {
       const c = new THREE.Mesh(new THREE.SphereGeometry(.18, 8, 8), lam(0x6b4a2b));
       c.position.set(x, y, z);
@@ -297,6 +308,42 @@ export function buildIsland() {
     });
     world.add(g);
   });
+
+  /* ورود وعشب — حياة عالجزيرة */
+  const flower = (x, z, color) => {
+    const g = new THREE.Group();
+    g.position.set(x, 0, z);
+    const stem = new THREE.Mesh(new THREE.CylinderGeometry(.025, .035, .34, 6), lam(0x3f8f3a));
+    stem.position.y = .17;
+    g.add(stem);
+    const head = new THREE.Group();
+    head.position.y = .37;
+    for (let i = 0; i < 5; i++) {
+      const a = (i / 5) * Math.PI * 2;
+      const p = new THREE.Mesh(new THREE.SphereGeometry(.06, 8, 6), lam(color));
+      p.position.set(Math.cos(a) * .085, 0, Math.sin(a) * .085);
+      p.scale.set(1, .5, 1);
+      head.add(p);
+    }
+    const core = new THREE.Mesh(new THREE.SphereGeometry(.055, 8, 6), lam(0xffd32a));
+    head.add(core);
+    g.add(head);
+    world.add(g);
+  };
+  flower(-7.2, .8, 0xff6f91); flower(7.6, .2, 0xa29bfe); flower(-6.2, 7.2, 0xffffff);
+  flower(6.4, 6.8, 0xff9f43); flower(-8.4, -3.4, 0xff6b6b); flower(8.6, -4.2, 0x74b9ff); flower(0, 9.3, 0xff6f91);
+  const tuft = (x, z) => {
+    const g = new THREE.Group();
+    g.position.set(x, 0, z);
+    [-1, 0, 1].forEach(k => {
+      const b = new THREE.Mesh(new THREE.ConeGeometry(.05, .32, 5), lam(0x54a044));
+      b.position.set(k * .07, .16, Math.abs(k) * .04);
+      b.rotation.z = -k * .2;
+      g.add(b);
+    });
+    world.add(g);
+  };
+  tuft(-4.8, 5.6); tuft(4.9, 5.4); tuft(-2.2, 7.8); tuft(2.4, 7.9); tuft(-5.6, -1.8); tuft(5.8, -2.2);
 }
 
 /* ---------- البنت الصغيرة ---------- */
@@ -353,6 +400,9 @@ export let carryAnchor;
     const e = new THREE.Mesh(new THREE.SphereGeometry(.055, 8, 8), new THREE.MeshBasicMaterial({ color: 0x2d3436 }));
     e.position.set(x, 2.48, .45);
     girl.add(e);
+    const shine = new THREE.Mesh(new THREE.SphereGeometry(.02, 6, 6), new THREE.MeshBasicMaterial({ color: 0xffffff }));
+    shine.position.set(x + .02, 2.5, .5);
+    girl.add(shine);
   });
   [[-.33], [.33]].forEach(([x]) => {
     const b = new THREE.Mesh(new THREE.SphereGeometry(.07, 8, 8), new THREE.MeshBasicMaterial({ color: 0xffb3ba }));
@@ -363,6 +413,26 @@ export let carryAnchor;
   smile.position.set(0, 2.32, .47);
   smile.rotation.z = Math.PI;
   girl.add(smile);
+  /* ربطة شعر وردية عجنب الرأس */
+  const bowM = new THREE.MeshLambertMaterial({ color: 0xff6f91 });
+  const bowA = new THREE.Mesh(new THREE.SphereGeometry(.1, 10, 8), bowM);
+  bowA.position.set(-.56, 2.68, .02);
+  bowA.scale.set(1, .75, .6);
+  girl.add(bowA);
+  const bowB = bowA.clone();
+  bowB.position.x = -.72;
+  girl.add(bowB);
+  const bowKnot = new THREE.Mesh(new THREE.SphereGeometry(.055, 8, 8), bowM);
+  bowKnot.position.set(-.64, 2.66, .04);
+  girl.add(bowKnot);
+  /* حذاء أحمر — يتأرجح مع الرجل */
+  const shoeM = lam(0xd63031);
+  const shoeL = new THREE.Mesh(new THREE.SphereGeometry(.14, 10, 8), shoeM);
+  shoeL.position.set(0, -.74, .05);
+  shoeL.scale.set(1, .6, 1.3);
+  legL.add(shoeL);
+  const shoeR = shoeL.clone();
+  legR.add(shoeR);
   carryAnchor = new THREE.Group();
   carryAnchor.position.set(0, 4.9, 0);
   girl.add(carryAnchor);
@@ -429,6 +499,12 @@ function letterTexture(ch, colorCss) {
   c.beginPath(); c.ellipse(148, 20, 16, 8, -.5, 0, Math.PI * 2); c.fill();
   c.fillStyle = colorCss;
   c.beginPath(); c.arc(128, 140, 108, 0, Math.PI * 2); c.fill();
+  /* تظليل كروي — يعطي حجم بدل دائرة مسطحة */
+  const shade = c.createRadialGradient(120, 122, 36, 128, 140, 112);
+  shade.addColorStop(0, 'rgba(255,255,255,0)');
+  shade.addColorStop(1, 'rgba(0,0,0,.24)');
+  c.fillStyle = shade;
+  c.beginPath(); c.arc(128, 140, 108, 0, Math.PI * 2); c.fill();
   c.strokeStyle = 'rgba(0,0,0,.18)';
   c.lineWidth = 10;
   c.stroke();
@@ -469,8 +545,9 @@ export function addFruit(ch, colorKey, treeIdx, onTap) {
   );
   plane.geometry.translate(0, -0.9, 0);
   pivot.add(plane);
+  /* كرة لمس غير مرئية — قابلة للنقر من أي زاوية كاميرا (القرص المسطح كان يضيع عند لف الكاميرا) */
   const hit = new THREE.Mesh(
-    new THREE.CircleGeometry(1.35, 12),
+    new THREE.SphereGeometry(1.05, 10, 8),
     new THREE.MeshBasicMaterial({ transparent: true, opacity: 0, depthWrite: false })
   );
   hit.position.y = -0.9;
@@ -1004,7 +1081,7 @@ window.__boot = 'fonts';
 
   window.__boot = 'levels';
   window.__letters = LETTERS_ALL;
-  const V = '?v=6';
+  const V = '?v=7';
   await import('./level1.js' + V).catch(err => {
     window.__loadErrors = (window.__loadErrors || []).concat(['level1: ' + (err && err.stack ? err.stack.split('\n').slice(0, 3).join(' | ') : err)]);
   });

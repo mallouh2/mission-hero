@@ -12,7 +12,7 @@ import {
   Sfx, voice, banner, setStars, world, scene, billboard, tween, easeIO,
   addFruit, clearFruits, pickFruit, takeCarried, addPickable, clearPickables,
   addUpdater, buildIsland, registerGame, setReplay, girlWalkTo, burst,
-} from './core.js?v=6';
+} from './core.js?v=7';
 
 const INSTR = {
   file: 'intro_animals',

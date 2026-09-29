@@ -12,7 +12,7 @@ import {
   Sfx, voice, banner, setStars, world, scene, billboard, tween, easeIO,
   addPickable, clearPickables, addUpdater, buildIsland, registerGame,
   setReplay, girlWalkTo, carryAnchor, burst, arNum,
-} from './core.js?v=6';
+} from './core.js?v=7';
 
 const INSTR = {
   file: 'intro_kitchen',
@@ -143,7 +143,7 @@ function makeItem(fruit, spot, idx) {
     onTap: onTapItem,
   };
   const hit = new THREE.Mesh(
-    new THREE.CylinderGeometry(1.0, 1.0, 1.9, 10),
+    new THREE.CylinderGeometry(0.8, 0.8, 1.9, 10),
     new THREE.MeshBasicMaterial({ transparent: true, opacity: 0, depthWrite: false })
   );
   hit.position.set(0, 0, 0); // بمركز الفاكهة نفسها
